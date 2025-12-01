@@ -1,4 +1,4 @@
-%%writefile app.py
+
 import streamlit as st
 import os
 from openai import AzureOpenAI
@@ -45,4 +45,5 @@ if prompt := st.chat_input("무엇을 도와드릴까요?"):
         st.markdown(assistant_reply)
 
     # (3) AI 응답 저장
+
     st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
