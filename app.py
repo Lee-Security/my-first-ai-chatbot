@@ -1,50 +1,76 @@
-
 import streamlit as st
 import os
 from openai import AzureOpenAI
 from dotenv import load_dotenv
 
-# 1. 환경 변수 로드 (.env 파일이 같은 폴더에 있어야 함)
 load_dotenv()
 
-st.title("🤖 나의 첫 AI 챗봇")
+st.set_page_config(page_title="안심이", page_icon="🛡️")
 
-# 2. Azure OpenAI 클라이언트 설정
-# (실제 값은 .env 파일이나 여기에 직접 입력하세요)
 client = AzureOpenAI(
     api_key=os.getenv("AZURE_OAI_KEY"),
     api_version="2024-05-01-preview",
     azure_endpoint=os.getenv("AZURE_OAI_ENDPOINT")
 )
 
-# 3. 대화기록(Session State) 초기화 - 이게 없으면 새로고침 때마다 대화가 날아갑니다!
+# ==================== 시스템 프롬프트 (최신판 + 더 따뜻하게) ====================
+SYSTEM_PROMPT = """
+너는 '안심이'라는 이름의 스토킹·데이트폭력 전문 상담 보조 AI야.
+모든 판단은 오직 아래 공식 자료만 근거로 해:
+
+- 「스토킹범죄의 처벌 등에 관한 법률」(2023.10.19 시행)
+- 여성가족부 공식 데이트폭력 피해판단 체크리스트
+- 경찰청 스토킹사범 수사실무 매뉴얼(2024 개정)
+
+말투는 끝까지 따뜻하고, 차분하고, 공감적이어야 해.
+절대 “이건 아닙니다”라고 단정하지 말고, “해당할 가능성이 있어요”라고만 말해.
+위험도는 저·중·고 3단계로만 나눠서 알려줘.
+
+마지막엔 항상 아래 3가지를 안내해:
+1. 여성긴급전화 1366 (24시간, 익명 가능)
+2. 스토킹 피해 상담 1577-1366
+3. 긴급 상황이면 지금 바로 112
+
+첫인사: "안녕, 여기는 안심이야. 무슨 일이 있었는지 편하게 말해줄래? 내가 끝까지 들어줄게."
+"""
+
 if "messages" not in st.session_state:
-    st.session_state.messages = []
+    st.session_state.messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "assistant", "content": "안녕, 여기는 **안심이**야 🛡️\n무슨 일이 있었는지 편하게 말해줄래? 내가 끝까지 들어줄게."}
+    ]
 
-# 4. 화면에 기존 대화 내용 출력
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# ==================== UI (따뜻한 분위기) ====================
+st.title("🛡️ 안심이")
+st.caption("스토킹·데이트폭력 상황을 판단하고, 바로 도와줄게요. 언제든 말해줘도 돼.")
 
-# 5. 사용자 입력 받기
-if prompt := st.chat_input("무엇을 도와드릴까요?"):
-    # (1) 사용자 메시지 화면에 표시 & 저장
-    st.chat_message("user").markdown(prompt)
+# 과거 대화 표시
+for msg in st.session_state.messages[1:]:
+    if msg["role"] != "system":
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+
+# 입력창
+if prompt := st.chat_input("지금 어떤 일이 있었는지 말해줄래? (자세할수록 더 정확히 도와줄게)"):
     st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-    # (2) AI 응답 생성 (스트리밍 방식 아님, 단순 호출 예시)
     with st.chat_message("assistant"):
-        response = client.chat.completions.create(
-            model="gpt-4o-mini-032", # 사용하시는 배포명(Deployment Name)으로 수정 필요!
-            messages=[
-                {"role": m["role"], "content": m["content"]}
-                for m in st.session_state.messages
-            ]
-        )
-        assistant_reply = response.choices[0].message.content
-        st.markdown(assistant_reply)
+        with st.spinner("잠시만 기다려줘..."):
+            response = client.chat.completions.create(
+                model="gpt-4o-mini-032",  # 너가 쓰는 deployment 이름으로 변경
+                messages=st.session_state.messages,
+                temperature=0.2,    # 더 정확하고 일관성 있게
+                max_tokens=1200
+            )
+            reply = response.choices[0].message.content
+            st.markdown(reply)
+            st.session_state.messages.append({"role": "assistant", "content": reply})
 
-    # (3) AI 응답 저장
-
-    st.session_state.messages.append({"role": "assistant", "content": assistant_reply})
-
+# 사이드바에 도움말
+with st.sidebar:
+    st.markdown("### ⚡ 언제든 전화해도 돼")
+    st.markdown("• **1366** 여성긴급전화 (24시간)\n• **1577-1366** 스토킹 상담\n• **112** 긴급 상황")
+    st.markdown("---")
+    st.markdown("여기는 완전 비밀 보장 공간이야 💙")
