@@ -42,7 +42,7 @@ if "messages" not in st.session_state:
 
 # ==================== UI (따뜻한 분위기) ====================
 st.title("🛡️ 안심이")
-st.caption("스토킹·데이트폭력 상황을 판단하고, 바로 도와줄게요. 언제든 말해줘도 돼.")
+st.caption("스토킹·데이트폭력 상황이 의심된다면, 바로 도와줄게요. 언제든 말해줘도 돼.")
 
 # 과거 대화 표시
 for msg in st.session_state.messages[1:]:
@@ -73,4 +73,5 @@ with st.sidebar:
     st.markdown("### ⚡ 언제든 전화해도 돼")
     st.markdown("• **1366** 여성긴급전화 (24시간)\n• **1577-1366** 스토킹 상담\n• **112** 긴급 상황")
     st.markdown("---")
-    st.markdown("여기는 완전 비밀 보장 공간이야 💙")
+    st.markdown("우리는 사용자의 개인정보와 상담 내용에 대한 익명성을 보장합니다. 💙")
+
